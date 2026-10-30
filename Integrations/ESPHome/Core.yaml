@@ -1,13 +1,20 @@
 substitutions:
-  version: "26.9.21.1"
+  version: "26.10.14.3"
   stable_manifest_base: "https://apolloautomation.github.io/CAST-1"
   beta_manifest_base: "https://github.com/ApolloAutomation/CAST-1/releases/download/beta-fw"
   stable_manifest_dir: "firmware"
   beta_manifest_file: "manifest.json"
+  # How far music drops (in dB) while an announcement plays; set in the
+  # device YAML's substitutions to override it (0 = no ducking)
+  announcement_ducking_db: "40"
+  # Onboard LED brightness while an announcement plays (0%-100%)
+  announcement_led_brightness: "50%"
 
 
 packages:
   wizmote: !include wizmote.yaml
+  # The external LED strip (led_strip.yaml) is opt-in: add it to the
+  # package files in the device YAML
 
 esphome:
   friendly_name: Apollo CAST-1
@@ -458,6 +465,9 @@ light:
     default_transition_length: 0s
     chipset: WS2812
     num_leds: 4
+    # The S3 has 192 RMT TX symbols in total and each strip defaults to all of
+    # them, so split them or the second strip's channel fails
+    rmt_symbols: 48
     channel_colors: GRB
     effects:
       - pulse:
@@ -593,10 +603,10 @@ media_player:
                 blue: 100%
                 red: 0%
                 green: 100%
-                brightness: 50%
+                brightness: ${announcement_led_brightness}
             - mixer_speaker.apply_ducking:
                 id: media_mixer_input
-                decibel_reduction: 40
+                decibel_reduction: ${announcement_ducking_db}
                 duration: 0.0s
             - wait_until:
                 media_player.is_announcing: external_media_player
